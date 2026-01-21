@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPTX To Exe Converter</title>
+    <style>
+        :root {
+            --primary: #d04423; /* Color PowerPoint */
+            --secondary: #2b2b2b;
+            --bg: #f0f2f5;
+        }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: var(--bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .card { background: white; padding: 2.5rem; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); width: 100%; max-width: 480px; border-top: 8px solid var(--primary); }
+        h1 { color: var(--secondary); text-align: center; margin-bottom: 5px; font-size: 1.8rem; }
+        p.subtitle { text-align: center; color: #666; margin-bottom: 25px; font-size: 0.9rem; }
+        
+        .field { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #444; }
+        input[type="text"] { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 10px; box-sizing: border-box; transition: 0.3s; font-size: 1rem; }
+        input[type="text"]:focus { border-color: var(--primary); outline: none; }
+        
+        .file-upload { border: 2px dashed #ccc; padding: 20px; text-align: center; border-radius: 10px; cursor: pointer; transition: 0.3s; background: #fafafa; }
+        .file-upload:hover { border-color: var(--primary); background: #fff5f2; }
+        input[type="file"] { display: none; }
+        
+        .btn-generate { width: 100%; background-color: var(--primary); color: white; border: none; padding: 15px; border-radius: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 15px; transition: transform 0.2s, background 0.3s; }
+        .btn-generate:hover { background-color: #b0351a; transform: translateY(-2px); }
+        .btn-generate:active { transform: translateY(0); }
+
+        .instructions { background: #fff9e6; border-left: 4px solid #ffcc00; padding: 15px; margin-top: 25px; border-radius: 4px; }
+        .instructions h4 { margin: 0 0 8px 0; color: #856404; font-size: 0.95rem; }
+        .instructions ol { margin: 0; padding-left: 20px; color: #856404; font-size: 0.85rem; line-height: 1.4; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>PPTX To Exe Converter</h1>
+    <p class="subtitle">Generador de scripts para presentaciones autoejecutables</p>
+    
+    <div class="field">
+        <label>Título de la Aplicación (Ventana)</label>
+        <input type="text" id="titleName" placeholder="Ej: Mi Presentación 2024" value="PPTX Launcher">
+    </div>
+
+    <div class="field">
+        <label>Archivo PowerPoint (.pptx)</label>
+        <label for="pptxFile" class="file-upload" id="dropZone">
+            <span id="fileNameLabel">Haz clic para seleccionar archivo</span>
+            <input type="file" id="pptxFile" accept=".pptx" onchange="handleFile()">
+        </label>
+    </div>
+
+    <button class="btn-generate" onclick="generateBatch()">Generar Script (.BAT)</button>
+
+    <div class="instructions">
+        <h4>Siguientes Pasos:</h4>
+        <ol>
+            <li>Descarga el archivo <b>.bat</b> generado.</li>
+            <li>Usa un programa como <i>Bat To Exe Converter</i>.</li>
+            <li><b>Importante:</b> En la pestaña "Includes" del conversor, añade tu archivo PPTX original.</li>
+            <li>Convierte a EXE para tener un solo archivo portable.</li>
+        </ol>
+    </div>
+</div>
+
+<script>
+    let selectedFileName = "";
+
+    function handleFile() {
+        const fileInput = document.getElementById('pptxFile');
+        if (fileInput.files.length > 0) {
+            selectedFileName = fileInput.files[0].name;
+            document.getElementById('fileNameLabel').innerHTML = "<b>Archivo:</b> " + selectedFileName;
+            document.getElementById('dropZone').style.borderColor = "#d04423";
+        }
+    }
+
+    function generateBatch() {
+        const title = document.getElementById('titleName').value;
+        
+        if (!selectedFileName) {
+            alert("Por favor, selecciona primero un archivo .pptx");
+            return;
+        }
+
+        const nameOnly = selectedFileName.replace('.pptx', '');
+
+        const scriptContent = `@echo off
+title ${title}
+color 0A
+
+:: Buscar el archivo en la carpeta temporal (donde se descomprime el EXE)
+set "filename=${selectedFileName}"
+set "local_path=%~dp0%filename%"
+
+echo ==========================================
+echo    PPTX TO EXE CONVERTER - CARGANDO
+echo ==========================================
+echo Recurso: ${nameOnly}
+
+:: 1. Intentar abrir desde carpeta interna/local
+if exist "%local_path%" (
+    echo [OK] Iniciando modo presentacion...
+    start "" "powerpnt.exe" /s "%local_path%"
+    exit
+)
+
+:: 2. Intento de respaldo en carpetas comunes
+if exist "%userprofile%\\Downloads\\%filename%" (
+    start "" "powerpnt.exe" /s "%userprofile%\\Downloads\\%filename%"
+    exit
+)
+
+color 0C
+echo [ERROR] No se pudo localizar el archivo: %filename%
+echo Asegurate de haber incluido el PPTX dentro del EXE.
+pause`;
+
+        const blob = new Blob([scriptContent], { type: 'text/plain' });
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.download = "Lanzador_PPTX.bat";
+        link.click();
+    }
+</script>
+
+</body>
+</html>
